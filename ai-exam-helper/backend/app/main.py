@@ -46,6 +46,12 @@ def seed_admin(db: Session) -> None:
 
 @app.on_event("startup")
 def on_startup() -> None:
+    if settings.JWT_SECRET in {"", "change-me"}:
+        raise RuntimeError(
+            "JWT_SECRET is unset or uses the insecure default. "
+            "Set a strong JWT_SECRET in backend/.env before starting the server."
+        )
+
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
     # Import models so they're registered with Base before create_all
     from app.models import ChatMessage, ChatSession, Paper, Quiz, User  # noqa: F401
@@ -70,7 +76,7 @@ def root():
 
 @app.get("/api/health")
 def health():
-    return {"status": "ok", "ai_configured": bool(settings.OPENAI_API_KEY)}
+    return {"status": "ok"}
 
 
 app.include_router(auth_router.router)

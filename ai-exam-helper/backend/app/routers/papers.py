@@ -63,6 +63,8 @@ async def upload_paper(
     contents = await file.read()
     if len(contents) > MAX_FILE_SIZE:
         raise HTTPException(status_code=400, detail="File too large (max 25 MB)")
+    if not contents.startswith(b"%PDF-"):
+        raise HTTPException(status_code=400, detail="File is not a valid PDF")
 
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
     safe_name = f"{uuid.uuid4().hex}{ext}"

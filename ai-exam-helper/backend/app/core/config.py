@@ -11,6 +11,8 @@ class Settings(BaseSettings):
 
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-4o-mini"
+    OPENAI_MAX_TOKENS: int = 1024
+    AI_DAILY_LIMIT_PER_USER: int = 50
 
     ADMIN_EMAIL: str = "admin@examhelper.com"
     ADMIN_PASSWORD: str = "Admin@12345"

@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.rate_limit import enforce_ai_quota
 from app.core.security import get_current_user
 from app.models.paper import Paper
 from app.models.quiz import Quiz
@@ -58,6 +59,8 @@ def generate_quiz(
 
     if not paper_title and not payload.topic:
         raise HTTPException(status_code=400, detail="Provide a paper_id or a topic")
+
+    enforce_ai_quota(user.id)
 
     questions = generate_quiz_questions(
         topic=payload.topic,

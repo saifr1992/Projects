@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.rate_limit import enforce_ai_quota
 from app.core.security import get_current_user
 from app.models.chat import ChatMessage, ChatSession
 from app.models.paper import Paper
@@ -78,6 +79,10 @@ def send_message(
     content = payload.content.strip()
     if not content:
         raise HTTPException(status_code=400, detail="Message cannot be empty")
+    if len(content) > 4000:
+        raise HTTPException(status_code=400, detail="Message too long (max 4000 chars)")
+
+    enforce_ai_quota(user.id)
 
     # Resolve or create session
     if payload.session_id:

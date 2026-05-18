@@ -1,14 +1,14 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
 
 class QuizGenerateRequest(BaseModel):
     paper_id: Optional[int] = None
-    topic: Optional[str] = None
+    topic: Optional[str] = Field(default=None, max_length=200)
     num_questions: int = Field(default=5, ge=3, le=15)
-    difficulty: str = Field(default="medium")  # easy | medium | hard
+    difficulty: Literal["easy", "medium", "hard"] = "medium"
 
 
 class QuizQuestion(BaseModel):

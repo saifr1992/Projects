@@ -29,4 +29,6 @@ build/
 .vscode/
 .idea/
 .DS_Store
-.DS_Store
+
+# Claude Code (local config)
+.claude/
