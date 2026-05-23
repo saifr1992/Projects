@@ -2,7 +2,7 @@ import { Download, FileText, Loader2, Search, Trash2, Upload, X } from "lucide-r
 import { type FormEvent, useEffect, useState } from "react";
 
 import { useAuth } from "../context/AuthContext";
-import { API_BASE_URL, api, extractError, tokenStore } from "../lib/api";
+import { api, extractError } from "../lib/api";
 import type { Paper } from "../lib/types";
 
 export function PapersPage() {
@@ -47,17 +47,20 @@ export function PapersPage() {
     load();
   }
 
-  async function handleDownload(paper: Paper) {
-    const token = tokenStore.get();
-    const resp = await fetch(`${API_BASE_URL}/api/papers/${paper.id}/download`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!resp.ok) return;
-    const blob = await resp.blob();
+  function handleDownload(paper: Paper) {
+    const text =
+      `Demo paper\n----------\n` +
+      `Title:    ${paper.title}\n` +
+      `Subject:  ${paper.subject}\n` +
+      `Year:     ${paper.year}\n` +
+      (paper.semester ? `Semester: ${paper.semester}\n` : "") +
+      (paper.description ? `\n${paper.description}\n` : "") +
+      `\n(This is a demo build — the real PDF is not attached.)\n`;
+    const blob = new Blob([text], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = paper.file_name;
+    a.download = paper.file_name.replace(/\.pdf$/i, ".txt");
     a.click();
     URL.revokeObjectURL(url);
   }

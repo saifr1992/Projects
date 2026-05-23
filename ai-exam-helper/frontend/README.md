@@ -1,73 +1,42 @@
-# React + TypeScript + Vite
+# ExamHelper — Frontend (Demo Mode)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 18 + TypeScript + Vite. This build runs **standalone with seeded demo data** — no backend, no API key, no database.
 
-Currently, two official plugins are available:
+## Quick start
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev      # http://localhost:5173
+npm run build    # type-check + production build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Demo credentials
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+| Role | Email | Password |
+|---|---|---|
+| Admin | `admin@examhelper.com` | `Admin@12345` |
+| Student | `student@examhelper.com` | `Student@12345` |
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+The signup form creates a new in-memory student account.
+
+## What's included
+
+- **Dashboard** — counts, recent papers, recent quizzes
+- **Past Papers** — 6 seeded papers across CS / Math / Physics with search, subject, and year filters. Admin can upload (metadata only) and delete. Downloads emit a small text stub.
+- **AI Tutor** — keyword-driven mock replies (markdown-formatted) across 2 seeded sessions; new sessions auto-create on first message.
+- **Quizzes** — a 12-question bank powers `Generate quiz`; submit to see per-question scoring and explanations. Two seeded quiz results show up in History.
+- **Admin Panel** — user list, system stats, user deletion.
+
+## How the demo layer works
+
+- [src/lib/demoData.ts](src/lib/demoData.ts) holds in-memory state (users, papers, sessions, quizzes) plus the question bank and the mock AI reply generator.
+- [src/lib/api.ts](src/lib/api.ts) keeps the same `axios` instance the pages already use, but swaps its `adapter` so every request is routed to `demoData` instead of going over the network. All pages are unchanged.
+- Auth uses `localStorage` for the session token (`demo-{userId}`), so refreshes keep you signed in. All other state resets on full page reload.
+
+## Pointing back at a real backend
+
+To re-enable a real backend later, restore [src/lib/api.ts](src/lib/api.ts) to use a `baseURL` (e.g. `import.meta.env.VITE_API_BASE_URL`) and remove the `api.defaults.adapter = ...` block. The page components don't need to change.
+
+## Stack
+
+React 18 · TypeScript · Vite 5 · Tailwind CSS · React Router 6 · Axios · Lucide icons · React Markdown (+ GFM)

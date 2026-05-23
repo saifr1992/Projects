@@ -1,57 +1,49 @@
 # AI Exam Helper
 
-An AI-powered web application that helps university students prepare for exams. Students can browse and download past papers, chat with an AI tutor (ChatGPT) about concepts, and generate auto-graded MCQ quizzes from any topic or past paper.
+An AI-powered web application that helps university students prepare for exams. Students can browse and download past papers, chat with an AI tutor about concepts, and generate auto-graded MCQ quizzes from any topic or past paper.
 
 This is a Final Year Project (FYP) implementation.
 
+> **Current state — frontend-only demo.** The app runs entirely from the `frontend/` directory with seeded demo data. No backend, database, or OpenAI key is required to try every screen. The `backend/` directory is kept for reference and can be re-attached later.
+
 ## Features
 
-- **Authentication** — Student signup/login + seeded Admin account, JWT-based sessions
-- **Past Papers** — Admin uploads PDF papers with subject/year/semester metadata; students search, filter, view, and download
-- **AI Tutor** — Persistent chat sessions powered by OpenAI's GPT-4o-mini, with optional past-paper grounding
-- **Quiz Generation** — AI-generated multiple-choice quizzes from any topic or past paper, auto-scored with explanations
-- **Dashboard** — Recent papers, chat sessions, quizzes, and average-score widget
-- **Admin Panel** — User management, system stats, paper moderation
+- **Authentication** — Seeded admin + student accounts. Sign up creates additional in-memory students.
+- **Past Papers** — 6 seeded papers across CS / Math / Physics with search and filtering. Admin upload/delete works in-memory; downloads emit a text stub in demo mode.
+- **AI Tutor** — Persistent chat sessions with markdown-formatted mock replies (keyword-driven across topics like Big-O, dynamic programming, recursion, derivatives, integrals).
+- **Quiz Generation** — Multiple-choice quizzes drawn from a 12-question bank, auto-scored with per-question explanations.
+- **Dashboard** — Recent papers, chat sessions, quizzes, and average-score widget.
+- **Admin Panel** — User management and system stats.
 
 ## Tech Stack
 
-**Backend**
-- Python 3.10+
-- FastAPI + Pydantic v2
-- SQLAlchemy 2.0 (SQLite for dev, PostgreSQL-ready via `DATABASE_URL`)
-- JWT (PyJWT) + bcrypt password hashing
-- OpenAI Python SDK
-
-**Frontend**
+**Frontend (active)**
 - React 18 + TypeScript
 - Vite 5
 - Tailwind CSS + custom component primitives
 - React Router 6
-- Axios
+- Axios (with a custom adapter that serves demo data instead of HTTP)
 - Lucide icons
 - React Markdown (with GFM) for rendering AI responses
+
+**Backend (paused — kept on disk for reference)**
+- Python 3.10+, FastAPI, SQLAlchemy 2.0, JWT auth, OpenAI Python SDK
 
 ## Project Structure
 
 ```
 FYP/
-├── backend/
-│   ├── app/
-│   │   ├── core/        # config, database, security
-│   │   ├── models/      # SQLAlchemy ORM models
-│   │   ├── schemas/     # Pydantic request/response schemas
-│   │   ├── routers/     # FastAPI routes (auth, papers, chat, quiz, admin)
-│   │   ├── services/    # OpenAI integration
-│   │   └── main.py      # FastAPI app + CORS + startup seed
-│   ├── uploads/         # PDF uploads stored locally
-│   ├── requirements.txt
-│   └── .env.example
+├── backend/              # FastAPI + SQLAlchemy — not used by the demo
 └── frontend/
     ├── src/
-    │   ├── components/  # Layout, ProtectedRoute
-    │   ├── context/     # AuthContext
-    │   ├── lib/         # api client, types, cn helper
-    │   ├── pages/       # Login, Signup, Dashboard, Papers, Chat, Quiz, Admin
+    │   ├── components/   # Layout, ProtectedRoute
+    │   ├── context/      # AuthContext
+    │   ├── lib/
+    │   │   ├── api.ts        # axios instance with a mock adapter
+    │   │   ├── demoData.ts   # seeded users / papers / sessions / quizzes
+    │   │   ├── types.ts
+    │   │   └── cn.ts
+    │   ├── pages/        # Login, Signup, Dashboard, Papers, Chat, Quiz, Admin
     │   ├── App.tsx
     │   └── main.tsx
     ├── tailwind.config.js
@@ -61,99 +53,55 @@ FYP/
 ## Setup
 
 ### Prerequisites
-- Python 3.10+
 - Node.js 20+
-- An OpenAI API key (https://platform.openai.com/api-keys)
 
-### 1. Backend
-
-```bash
-cd backend
-
-# Create and activate a virtual environment
-python3 -m venv .venv
-source .venv/bin/activate          # macOS / Linux
-# .venv\Scripts\activate           # Windows
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Configure environment
-cp .env.example .env
-# Edit .env and set OPENAI_API_KEY and (optionally) JWT_SECRET, ADMIN_EMAIL, etc.
-
-# Run the API
-uvicorn app.main:app --reload --port 8000
-```
-
-The API will be available at http://localhost:8000 and interactive docs at http://localhost:8000/docs.
-
-On first run the app creates `exam_helper.db` (SQLite) and seeds an admin account using `ADMIN_EMAIL` / `ADMIN_PASSWORD` from `.env` (defaults to `admin@examhelper.com` / `Admin@12345`).
-
-### 2. Frontend
+### Run the demo
 
 ```bash
 cd frontend
-
-# Install dependencies
 npm install
-
-# Configure environment (optional — defaults to http://localhost:8000)
-cp .env.example .env
-
-# Run the dev server
 npm run dev
 ```
 
-Open http://localhost:5173 in your browser.
+Open <http://localhost:5173>.
 
-### 3. Using the App
+### Demo credentials
 
-1. **Log in as admin** with the credentials from `backend/.env` to upload past papers.
-2. **Sign up as a student** (or use a different account) to browse, chat, and take quizzes.
-3. Upload at least one PDF paper to get the full experience (chat with paper context, quiz from paper).
+| Role | Email | Password |
+|---|---|---|
+| Admin | `admin@examhelper.com` | `Admin@12345` |
+| Student | `student@examhelper.com` | `Student@12345` |
 
-## Switching to PostgreSQL
+You can also sign up — new accounts become students in memory.
 
-Edit `backend/.env`:
+### Notes on demo state
 
-```
-DATABASE_URL=postgresql+psycopg2://user:pass@localhost:5432/exam_helper
-```
+- The session token (`demo-{userId}`) is stored in `localStorage`, so refreshes keep you signed in.
+- All other state (papers you upload, sessions you start, quizzes you take) lives in memory and resets on a full page reload.
 
-Install the driver: `pip install psycopg2-binary`.
-The app calls `Base.metadata.create_all(...)` on startup, so tables are auto-created.
+## How the demo layer works
 
-## API Overview
+- [frontend/src/lib/demoData.ts](frontend/src/lib/demoData.ts) seeds 4 users, 6 papers, 2 chat sessions, 2 completed quizzes, and exposes a small API (`login`, `listPapers`, `sendMessage`, `generateQuiz`, …).
+- [frontend/src/lib/api.ts](frontend/src/lib/api.ts) overrides the axios `adapter` so every `api.get/post/delete` call is routed to `demoData` instead of going over the network. Pages don't know the difference.
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| POST | `/api/auth/signup` | — | Create a student account |
-| POST | `/api/auth/login` | — | Get a JWT token |
-| GET | `/api/auth/me` | user | Current user |
-| GET | `/api/papers` | user | List/search/filter papers |
-| POST | `/api/papers` | admin | Upload a PDF paper |
-| GET | `/api/papers/{id}/download` | user | Download paper PDF |
-| DELETE | `/api/papers/{id}` | admin | Remove a paper |
-| GET | `/api/chat/sessions` | user | List chat sessions |
-| GET | `/api/chat/sessions/{id}` | user | Get a session with messages |
-| POST | `/api/chat/send` | user | Send a message; AI replies |
-| POST | `/api/quiz/generate` | user | Generate a new quiz |
-| POST | `/api/quiz/{id}/submit` | user | Submit answers and get scored |
-| GET | `/api/quiz` | user | Quiz history |
-| GET | `/api/admin/users` | admin | List all users |
-| GET | `/api/admin/stats` | admin | System counts |
+## Re-enabling the backend later
 
-Full OpenAPI docs at `/docs` when the backend is running.
+To go back to a live FastAPI backend:
+
+1. Restore the `baseURL` in [frontend/src/lib/api.ts](frontend/src/lib/api.ts) to `import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000"` and remove the `api.defaults.adapter = ...` block (drop the `demoData` import).
+2. Set `frontend/.env`: `VITE_API_BASE_URL=http://localhost:8000`.
+3. Start the backend — see [backend/](backend/) for the FastAPI app, its `requirements.txt`, and `.env.example` (needs `OPENAI_API_KEY` and a `JWT_SECRET`).
+
+Page components require no changes.
 
 ## Possible Future Work
 
-These were intentionally scoped out of the MVP — easy to add later:
+Intentionally scoped out of the MVP:
 
-- ML-driven trend analysis (Pandas/NumPy/TensorFlow): repeated-question detection and topic-weightage prediction across uploaded papers
+- ML-driven trend analysis (repeated-question detection, topic-weightage prediction across uploaded papers)
 - Performance analytics (score progression, weak topics)
 - Streaming AI responses (Server-Sent Events) for a typewriter effect
-- PDF text extraction so the AI sees paper contents directly (currently uses metadata only)
+- PDF text extraction so the AI sees paper contents directly (currently metadata only)
 - Cloud storage (S3) for PDFs
 - Email verification + password reset
 
